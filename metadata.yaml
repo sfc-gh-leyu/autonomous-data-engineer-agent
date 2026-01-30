@@ -1,0 +1,5 @@
+database: LEILA_APP
+schema: PUBLIC
+role: ACCOUNTADMIN
+agent_name: DATA_ENGINEER_AGENT
+warehouse: LEILAAPP

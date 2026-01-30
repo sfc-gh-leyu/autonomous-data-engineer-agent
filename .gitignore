@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+*.egg-info/
+.venv/
+venv/
+ENV/
+
+# Streamlit
+.streamlit/
+
+# Docker
+.dockerignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+create_agent_simple.sql
+create_agent.py
+create_agent_rest.py
+create_agent_snowcli.py
+agent_spec_formatted.json
