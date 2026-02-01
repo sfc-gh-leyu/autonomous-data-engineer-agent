@@ -965,6 +965,120 @@ SNOWFLAKE_CONNECTION_NAME=<connection> streamlit run streamlit_app.py
 7. **DDL Review**: Agent should always show DDL to user before executing
 8. **Tracking**: Always log pipeline creation to tracker table
 
+### Snowflake Stage Query Best Practices
+
+9. **Never use SELECT * on stages**: Always use positional notation ($1, $2, $3...)
+   ```python
+   # ❌ WRONG
+   query = f"SELECT * FROM @{stage_name} (FILE_FORMAT => {format_name})"
+   
+   # ✅ CORRECT
+   query = f"SELECT $1, $2, $3, $4, $5 FROM @{stage_name} (FILE_FORMAT => {format_name})"
+   ```
+
+10. **Use INFER_SCHEMA before building queries**: Determine column count programmatically
+    ```python
+    # Get column count from INFER_SCHEMA
+    schema_result = session.sql(f"""
+        SELECT * FROM TABLE(
+          INFER_SCHEMA(
+            LOCATION => '@{stage_name}',
+            FILE_FORMAT => '{format_name}'
+          )
+        )
+    """).collect()
+    
+    num_columns = len(schema_result)
+    
+    # Build positional SELECT
+    columns = ", ".join([f"${i+1}" for i in range(num_columns)])
+    query = f"SELECT {columns} FROM @{stage_name} (FILE_FORMAT => {format_name})"
+    ```
+
+11. **CSV File Formats**: Always set `SKIP_HEADER = 1` for files with header rows
+    ```sql
+    CREATE OR REPLACE FILE FORMAT CSV_FORMAT
+      TYPE = CSV
+      SKIP_HEADER = 1        -- Critical for CSV files with headers
+      FIELD_DELIMITER = ','
+      ESCAPE = NONE
+      PARSE_HEADER = false;  -- Set to true if you want to parse column names
+    ```
+
+### External Table Best Practices
+
+12. **Prefer staging tables over external tables** when:
+    - File paths contain spaces or special characters
+    - Need guaranteed data availability
+    - Performance is critical (staging tables are faster)
+    
+    ```sql
+    -- Instead of external table
+    CREATE OR REPLACE TABLE STAGING_TABLE AS
+    SELECT $1, $2, $3, $4, $5
+    FROM @MY_STAGE (FILE_FORMAT => MY_FORMAT);
+    ```
+
+13. **Always verify stage contents before creating tables**:
+    ```sql
+    -- Check files exist
+    LIST @MY_STAGE;
+    
+    -- Test data access
+    SELECT $1, $2, $3 FROM @MY_STAGE (FILE_FORMAT => MY_FORMAT) LIMIT 10;
+    ```
+
+14. **Provide both query options in UI**: Give users choice between external table and direct stage queries
+    - External tables: Better for structured, repeatable queries
+    - Stage queries: Better for ad-hoc exploration and troubleshooting
+
+### Streamlit Development Best Practices
+
+15. **Multi-page app structure**: Use `pages/` directory for automatic routing
+    ```
+    streamlit_app.py        # Home page
+    pages/
+      Data_Preview.py       # Auto-routes to /Data_Preview
+      Pipeline_Tracker.py   # Auto-routes to /Pipeline_Tracker
+    ```
+
+16. **Page naming convention**: Filename becomes page title
+    - `Data_Preview.py` → "Data Preview" (underscores become spaces)
+    - Use `st.set_page_config(page_title="...")` for custom titles
+
+17. **Session initialization pattern**: Always use try/except for Snowflake connection
+    ```python
+    try:
+        session = get_active_session()  # Works in SPCS/SiS
+    except:
+        # Fallback for local development
+        import os
+        from snowflake.connector import connect
+        conn = connect(connection_name=os.getenv("SNOWFLAKE_CONNECTION_NAME") or "default")
+        from snowflake.snowpark import Session
+        session = Session.builder.configs({"connection": conn}).create()
+    ```
+
+18. **Always set database/schema/warehouse context**:
+    ```python
+    session.sql("USE DATABASE MY_DB").collect()
+    session.sql("USE SCHEMA PUBLIC").collect()
+    session.sql("USE WAREHOUSE MY_WH").collect()
+    ```
+
+19. **Error handling in UI**: Wrap queries in try/except and show user-friendly messages
+    ```python
+    try:
+        result = session.sql(query).collect()
+        if result:
+            st.success(f"Found {len(result)} rows")
+            st.dataframe(result)
+        else:
+            st.warning("No data returned")
+    except Exception as e:
+        st.error(f"Error: {str(e)}")
+    ```
+
 ## Common Issues
 
 ### Issue: Agent Creation Fails with "syntax error"
@@ -984,6 +1098,98 @@ SHOW PROCEDURES IN SCHEMA <DATABASE>.<SCHEMA>;
 
 ### Issue: Streamlit can't connect
 **Solution**: Set `SNOWFLAKE_CONNECTION_NAME` environment variable
+
+### Issue: Stage query fails with "SELECT with no columns"
+**Problem**: Using `SELECT *` on Snowflake stages
+```sql
+-- ❌ WRONG - This fails
+SELECT * FROM @MY_STAGE (FILE_FORMAT => MY_FORMAT);
+```
+
+**Root Cause**: Snowflake stages don't have named columns, so `SELECT *` is invalid syntax.
+
+**Solution**: Use positional notation with $1, $2, $3, etc.
+```sql
+-- ✅ CORRECT - Use positional notation
+SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+FROM @MY_STAGE (FILE_FORMAT => MY_FORMAT)
+LIMIT 100;
+```
+
+**Best Practice**: Use `INFER_SCHEMA` first to determine number of columns:
+```sql
+SELECT * FROM TABLE(
+  INFER_SCHEMA(
+    LOCATION => '@MY_STAGE',
+    FILE_FORMAT => 'MY_FORMAT'
+  )
+);
+```
+Then count the columns and generate the appropriate positional SELECT.
+
+### Issue: External table queries return no data
+**Problem**: External table created but queries return empty results, even when stage has data
+
+**Common Causes**:
+1. **File path contains spaces or special characters**
+   - External tables may fail silently with certain file path patterns
+   - Example: `s3://bucket/folder/My File Name.csv` 
+   
+2. **LOCATION specification mismatch**
+   - External table LOCATION must exactly match file path in stage
+   - Trailing slashes matter: `/folder/` vs `/folder`
+
+3. **File format parameters incorrect**
+   - CSV files with headers need `SKIP_HEADER = 1`
+   - Without this, data may be misaligned or empty
+
+**Solution 1**: Create a regular staging table instead
+```sql
+-- Instead of external table, use regular table with COPY INTO
+CREATE OR REPLACE TABLE STAGING_TABLE AS
+SELECT $1, $2, $3, $4, $5  -- positional columns
+FROM @MY_STAGE
+(FILE_FORMAT => MY_FORMAT);
+```
+
+**Solution 2**: Fix file format and location
+```sql
+-- Ensure file format has correct parameters
+CREATE OR REPLACE FILE FORMAT CSV_FORMAT
+  TYPE = CSV
+  SKIP_HEADER = 1
+  FIELD_DELIMITER = ','
+  ESCAPE = NONE;
+
+-- Verify files in stage
+LIST @MY_STAGE;
+
+-- Create external table with exact LOCATION
+CREATE OR REPLACE EXTERNAL TABLE MY_TABLE
+  WITH LOCATION = @MY_STAGE
+  FILE_FORMAT = CSV_FORMAT;
+```
+
+**Solution 3**: Query stage directly for troubleshooting
+```sql
+-- This always works - bypasses external table issues
+SELECT $1, $2, $3 
+FROM @MY_STAGE
+(FILE_FORMAT => CSV_FORMAT)
+LIMIT 10;
+```
+
+### Issue: Streamlit page title doesn't match expected name
+**Problem**: Page shows "streamlit app" instead of custom title
+
+**Root Cause**: Streamlit auto-generates page titles from Python filename
+- Filename: `Data_Preview.py` → Page title: "Data Preview"
+- Underscores become spaces
+- First letter capitalized
+
+**Solution**: 
+1. Rename file to match desired title (e.g., `Home.py` → "Home")
+2. Or use `st.set_page_config(page_title="Custom Title")` at the very top of the script
 
 ## Example Workflow
 
@@ -1025,6 +1231,336 @@ Agent will:
 6. **Response instructions improve UX**: Formatting guidelines make agent responses clearer
 7. **Budget settings**: Set appropriate token and time budgets for complex workflows
 8. **Test incrementally**: Verify each component before moving to the next
+
+### Critical Snowflake Stage Learnings
+
+9. **SELECT * doesn't work on stages**: This is a fundamental Snowflake limitation
+   - Stages have no named columns, only positional references
+   - Always use $1, $2, $3... notation
+   - Error message: "SELECT with no columns"
+
+10. **INFER_SCHEMA is essential**: Use it to discover data structure before writing queries
+    - Returns column names, types, and order
+    - Helps determine how many $N columns to select
+    - Works for CSV, JSON, Parquet, and other formats
+
+11. **External tables can fail silently**: Don't rely solely on external tables
+    - File paths with spaces cause issues
+    - LOCATION mismatches return empty results
+    - Always provide direct stage query as backup option
+
+12. **Staging tables are more reliable**: Convert stage data to regular tables when possible
+    - Better performance
+    - Avoid file path issues
+    - Support SELECT * syntax
+    - Easier to query and join
+
+### Streamlit Multi-Page App Learnings
+
+13. **Filename determines page title**: Streamlit auto-generates titles from filenames
+    - Underscores become spaces
+    - First letter capitalized
+    - Can override with st.set_page_config()
+
+14. **Session management in multi-page apps**: Each page needs its own session initialization
+    - Use try/except pattern for compatibility
+    - Set database/schema/warehouse context on every page
+    - Environment variable for connection selection
+
+15. **UI feedback is critical**: Always show query results immediately
+    - Success messages with row counts
+    - Error messages with details
+    - Data preview with dataframes
+    - Clear button labels and descriptions
+
+### Debugging Workflow Learnings
+
+16. **Test both data access methods**: Always provide multiple ways to access data
+    - External table queries
+    - Direct stage queries
+    - Staging table queries (most reliable)
+
+17. **Read error messages carefully**: Snowflake errors are usually specific
+    - "SELECT with no columns" → using SELECT * on stage
+    - "Object does not exist" → check database/schema context
+    - Empty results → check file format, location, or use staging table
+
+18. **Verify in browser**: Actually click buttons and test the UI
+    - Code changes aren't enough
+    - Must refresh browser after file edits
+    - Check success/error messages appear correctly
+    - Verify data displays as expected
+
+19. **File format parameters matter**: CSV files need specific settings
+    - SKIP_HEADER = 1 for files with headers
+    - FIELD_DELIMITER must match actual delimiter
+    - ESCAPE = NONE for simple CSV files
+    - PARSE_HEADER impacts column naming
+
+## Complete Data Preview Implementation Example
+
+Based on real-world debugging experience, here's a complete Data Preview page that handles all edge cases:
+
+```python
+import streamlit as st
+from snowflake.snowpark.context import get_active_session
+
+# Session initialization with fallback
+try:
+    session = get_active_session()
+except:
+    import os
+    from snowflake.connector import connect
+    conn = connect(connection_name=os.getenv("SNOWFLAKE_CONNECTION_NAME") or "pm")
+    from snowflake.snowpark import Session
+    session = Session.builder.configs({"connection": conn}).create()
+
+# Set context
+session.sql("USE DATABASE LEILA_APP").collect()
+session.sql("USE SCHEMA PUBLIC").collect()
+session.sql("USE WAREHOUSE LEILAAPP").collect()
+
+st.title("📊 Data Preview")
+
+# Get pipeline info
+pipeline_result = session.sql("""
+    SELECT 
+        PIPELINE_ID,
+        TABLE_NAME,
+        STAGE_NAME,
+        FILE_FORMAT_NAME,
+        STATUS
+    FROM DATA_PIPELINE_TRACKER
+    ORDER BY CREATED_AT DESC
+    LIMIT 1
+""").collect()
+
+if not pipeline_result:
+    st.error("No pipelines found")
+    st.stop()
+
+pipeline = pipeline_result[0].asDict()
+
+# Tabs for different query methods
+tab1, tab2, tab3 = st.tabs(["External Table", "Stage Data", "Staging Table"])
+
+with tab1:
+    st.subheader("Query External Table")
+    limit_ext = st.number_input("Limit rows (External Table)", 10, 1000, 100, key="limit_ext")
+    
+    if st.button("🔍 Query External Table", key="query_external"):
+        with st.spinner("Querying external table..."):
+            try:
+                result = session.sql(f"""
+                    SELECT * FROM LEILA_APP.PUBLIC.{pipeline['TABLE_NAME']}
+                    LIMIT {limit_ext}
+                """).collect()
+                
+                if result:
+                    st.success(f"Found {len(result)} rows")
+                    st.dataframe(result, use_container_width=True)
+                else:
+                    st.warning("External table query returned no data. Try Stage Data tab.")
+            except Exception as e:
+                st.error(f"Error: {str(e)}")
+                st.info("💡 Try the 'Stage Data' or 'Staging Table' tabs instead")
+
+with tab2:
+    st.subheader("Query Stage Directly")
+    st.info("Using positional notation ($1, $2, $3...) to query stage")
+    
+    limit_stage = st.number_input("Limit rows (Stage)", 10, 1000, 100, key="limit_stage")
+    
+    # First, use INFER_SCHEMA to get column count
+    if st.button("🔍 Query Stage Directly", key="query_stage"):
+        with st.spinner("Querying stage..."):
+            try:
+                # Get schema info
+                schema_result = session.sql(f"""
+                    SELECT * FROM TABLE(
+                      INFER_SCHEMA(
+                        LOCATION => '@LEILA_APP.PUBLIC.{pipeline['STAGE_NAME']}',
+                        FILE_FORMAT => 'LEILA_APP.PUBLIC.{pipeline['FILE_FORMAT_NAME']}'
+                      )
+                    )
+                """).collect()
+                
+                num_columns = len(schema_result)
+                st.info(f"Detected {num_columns} columns in file")
+                
+                # Build positional SELECT
+                columns = ", ".join([f"${i+1}" for i in range(num_columns)])
+                
+                result = session.sql(f"""
+                    SELECT {columns}
+                    FROM @LEILA_APP.PUBLIC.{pipeline['STAGE_NAME']}
+                    (FILE_FORMAT => LEILA_APP.PUBLIC.{pipeline['FILE_FORMAT_NAME']})
+                    LIMIT {limit_stage}
+                """).collect()
+                
+                if result:
+                    st.success(f"Found {len(result)} rows")
+                    st.dataframe(result, use_container_width=True)
+                    
+                    st.markdown("### 📊 Column Info")
+                    st.write(f"Total columns: {len(result[0].asDict().keys())}")
+                    st.write("Column names:", list(result[0].asDict().keys()))
+                else:
+                    st.warning("No data returned from stage")
+            except Exception as e:
+                st.error(f"Error querying stage: {str(e)}")
+
+with tab3:
+    st.subheader("Query Staging Table (Most Reliable)")
+    st.info("Uses a regular Snowflake table - supports SELECT * and fastest performance")
+    
+    limit_staging = st.number_input("Limit rows (Staging Table)", 10, 1000, 100, key="limit_staging")
+    
+    if st.button("🔍 Query Staging Table", key="query_staging"):
+        with st.spinner("Querying staging table..."):
+            try:
+                # Check if staging table exists
+                staging_table_name = f"STAGING_{pipeline['PIPELINE_ID']}"
+                
+                # Try to query it
+                result = session.sql(f"""
+                    SELECT * FROM LEILA_APP.PUBLIC.{staging_table_name}
+                    LIMIT {limit_staging}
+                """).collect()
+                
+                if result:
+                    st.success(f"Found {len(result)} rows")
+                    st.dataframe(result, use_container_width=True)
+                else:
+                    st.warning("No data in staging table")
+            except Exception as e:
+                # Table doesn't exist, create it
+                st.warning(f"Staging table doesn't exist. Creating it now...")
+                try:
+                    # Get column count first
+                    schema_result = session.sql(f"""
+                        SELECT * FROM TABLE(
+                          INFER_SCHEMA(
+                            LOCATION => '@LEILA_APP.PUBLIC.{pipeline['STAGE_NAME']}',
+                            FILE_FORMAT => 'LEILA_APP.PUBLIC.{pipeline['FILE_FORMAT_NAME']}'
+                          )
+                        )
+                    """).collect()
+                    
+                    num_columns = len(schema_result)
+                    columns = ", ".join([f"${i+1}" for i in range(num_columns)])
+                    
+                    # Create staging table
+                    session.sql(f"""
+                        CREATE OR REPLACE TABLE LEILA_APP.PUBLIC.{staging_table_name} AS
+                        SELECT {columns}
+                        FROM @LEILA_APP.PUBLIC.{pipeline['STAGE_NAME']}
+                        (FILE_FORMAT => LEILA_APP.PUBLIC.{pipeline['FILE_FORMAT_NAME']})
+                    """).collect()
+                    
+                    st.success("Staging table created! Click again to query.")
+                except Exception as create_error:
+                    st.error(f"Error creating staging table: {str(create_error)}")
+```
+
+### Key Features of This Implementation:
+
+1. **Three data access methods**: External table, direct stage query, and staging table
+2. **Dynamic column detection**: Uses INFER_SCHEMA to build queries
+3. **Error recovery**: Suggests alternatives when one method fails
+4. **Auto-creation**: Creates staging table if it doesn't exist
+5. **User-friendly feedback**: Clear success/warning/error messages
+6. **Performance options**: Users can choose speed vs flexibility
+
+## Troubleshooting Workflow
+
+When debugging data access issues, follow this systematic approach:
+
+### Step 1: Verify Stage Contents
+```sql
+-- List files in stage
+LIST @MY_STAGE;
+
+-- Check file size and path
+-- Look for: spaces in filenames, special characters, correct location
+```
+
+### Step 2: Test File Format
+```sql
+-- Verify file format exists and has correct settings
+DESC FILE FORMAT MY_FORMAT;
+
+-- Key settings to check:
+-- - SKIP_HEADER = 1 (for CSV with headers)
+-- - FIELD_DELIMITER matches actual delimiter
+-- - TYPE matches file type (CSV, JSON, PARQUET, etc.)
+```
+
+### Step 3: Infer Schema
+```sql
+-- Discover data structure
+SELECT * FROM TABLE(
+  INFER_SCHEMA(
+    LOCATION => '@MY_STAGE',
+    FILE_FORMAT => 'MY_FORMAT'
+  )
+);
+
+-- This tells you:
+-- - Number of columns
+-- - Column names (if PARSE_HEADER = true)
+-- - Column types
+-- - Any parsing issues
+```
+
+### Step 4: Test Direct Stage Query
+```sql
+-- Use positional notation based on INFER_SCHEMA results
+SELECT $1, $2, $3, $4, $5
+FROM @MY_STAGE
+(FILE_FORMAT => MY_FORMAT)
+LIMIT 10;
+
+-- If this fails:
+-- - Check file format parameters
+-- - Verify files aren't corrupted
+-- - Check IAM roles for cloud storage
+```
+
+### Step 5: Check External Table
+```sql
+-- Verify external table definition
+DESC EXTERNAL TABLE MY_EXTERNAL_TABLE;
+
+-- Query it
+SELECT * FROM MY_EXTERNAL_TABLE LIMIT 10;
+
+-- If empty but stage query works:
+-- - File path in LOCATION may not match stage files
+-- - Consider using staging table instead
+```
+
+### Step 6: Create Staging Table (If Needed)
+```sql
+-- Most reliable option - copy data to regular table
+CREATE OR REPLACE TABLE MY_STAGING_TABLE AS
+SELECT $1 as col1, $2 as col2, $3 as col3
+FROM @MY_STAGE
+(FILE_FORMAT => MY_FORMAT);
+
+-- Benefits:
+-- - Supports SELECT *
+-- - Faster queries
+-- - No file path issues
+-- - Can add indexes, constraints, etc.
+```
+
+### Step 7: Verify in Streamlit UI
+1. Refresh browser to load latest code
+2. Click each query button
+3. Check for success messages
+4. Verify data displays correctly
+5. Test error scenarios
 
 ## References
 

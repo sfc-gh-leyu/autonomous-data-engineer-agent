@@ -2,6 +2,8 @@
 
 An intelligent Snowflake agent that automatically generates DDL and sets up data pipelines for external data sources.
 
+> **✨ Updated February 2026**: Now includes production-tested patterns, comprehensive troubleshooting guides, and real-world debugging solutions. See [SKILL_UPDATE_SUMMARY.md](SKILL_UPDATE_SUMMARY.md) for latest improvements.
+
 ## 🎯 Features
 
 - **Storage Integration Generation**: Automatically creates storage integrations for AWS S3, Azure Blob Storage, and Google Cloud Storage
@@ -166,6 +168,22 @@ ORDER BY CREATED_AT DESC;
 
 ## 🐛 Troubleshooting
 
+### Common Issues and Solutions
+
+#### Issue: Stage query fails with "SELECT with no columns"
+**Cause**: Using `SELECT *` on Snowflake stages  
+**Solution**: Use positional notation ($1, $2, $3...) - see [QUICK_REFERENCE.md](QUICK_REFERENCE.md)
+
+#### Issue: External table returns no data
+**Cause**: File paths with spaces or LOCATION mismatch  
+**Solution**: Create staging table instead - see [SKILL.md](SKILL.md#issue-external-table-queries-return-no-data)
+
+#### Issue: CSV data misaligned
+**Cause**: Missing SKIP_HEADER parameter  
+**Solution**: Set `SKIP_HEADER = 1` in file format
+
+For complete troubleshooting guide, see [SKILL.md - Troubleshooting Workflow](SKILL.md#troubleshooting-workflow)
+
 ### Check Service Status
 
 ```sql
@@ -217,8 +235,22 @@ GRANT USAGE ON SCHEMA LEILA_APP.PUBLIC TO ROLE DATA_ENGINEER;
 GRANT USAGE ON WAREHOUSE LEILAAPP TO ROLE DATA_ENGINEER;
 ```
 
-## 📚 Additional Resources
+## 📚 Documentation
 
+### Quick Start
+- **[START_HERE.md](START_HERE.md)** - Getting started guide
+- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - One-page cheat sheet for common patterns
+
+### Detailed Guides
+- **[SKILL.md](SKILL.md)** - Complete skill documentation with step-by-step instructions
+- **[SKILL_UPDATE_SUMMARY.md](SKILL_UPDATE_SUMMARY.md)** - Recent improvements and lessons learned
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - System architecture and design decisions
+- **[DEPLOYMENT_SUMMARY.md](DEPLOYMENT_SUMMARY.md)** - Deployment options and instructions
+
+### Examples
+- **[examples/pages/Data_Preview.py](examples/pages/Data_Preview.py)** - Production-ready data preview page with multiple query methods
+
+### Snowflake Documentation
 - [Snowflake Cortex Agents Documentation](https://docs.snowflake.com/en/user-guide/snowflake-cortex/cortex-agents)
 - [Snowpark Container Services Documentation](https://docs.snowflake.com/en/developer-guide/snowpark-container-services/overview)
 - [External Tables Documentation](https://docs.snowflake.com/en/user-guide/tables-external-intro)
