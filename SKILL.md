@@ -1,8 +1,8 @@
 ---
-name: autonomous-data-engineer-agent
-description: "Create an autonomous data engineer agent that generates DDL and sets up data pipelines. The agent uses custom stored procedures as tools to handle storage integrations, file formats, external stages, and external tables for AWS S3, Azure, and GCS. Includes Streamlit dashboard and SPCS deployment."
+name: create-data-engineer-agent-app
+description: "Create a data engineer agent app that generates DDL and sets up data pipelines. The agent uses custom stored procedures as tools to handle storage integrations, file formats, external stages, and external tables for AWS S3, Azure, and GCS. Includes Streamlit dashboard and SPCS deployment."
 triggers:
-  - "create autonomous data engineer agent"
+  - "create data engineer agent app"
   - "build data pipeline agent"
   - "agent that creates external tables"
   - "automate data pipeline setup"
@@ -10,7 +10,7 @@ triggers:
   - "data engineer automation agent"
 ---
 
-# Autonomous Data Engineer Agent
+# Create Data Engineer Agent App
 
 > **📝 Note on Placeholders**: Throughout this document, angle brackets like `<DATABASE>`, `<WAREHOUSE>`, `<AGENT_NAME>`, and `<connection>` are placeholders. Replace them with your actual Snowflake object names when implementing. For example:
 > - `<DATABASE>` → your database name (e.g., `MY_DATABASE`)

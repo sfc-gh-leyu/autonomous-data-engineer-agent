@@ -1,8 +1,8 @@
-# Autonomous Data Engineer Agent Skill
+# Create Data Engineer Agent App Skill
 
 ## What is This?
 
-This is a **reusable skill** for Cortex Code that automates the creation of autonomous data engineer agents in Snowflake.
+This is a **reusable skill** for Cortex Code that automates the creation of data engineer agent apps in Snowflake.
 
 ## Quick Start
 

@@ -1,4 +1,4 @@
-# Autonomous Data Engineer Agent - SPCS App
+# Create Data Engineer Agent App - SPCS App
 
 An intelligent Snowflake agent that automatically generates DDL and sets up data pipelines for external data sources.
 

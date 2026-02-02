@@ -1,6 +1,6 @@
 spec:
   containers:
-  - name: data-engineer-agent
+  - name: create-data-engineer-agent-app
     image: /leila_app/public/data_engineer_repo/data_engineer_agent:latest
     env:
       SNOWFLAKE_ACCOUNT: pm-pm_aws_us_west_2
