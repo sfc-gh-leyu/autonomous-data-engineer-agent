@@ -34,7 +34,7 @@ def call_agent(message: str, thread_id: str = None):
     
     sql = f"""
     SELECT SYSTEM$RUN_CORTEX_AGENT(
-        'LEILA_APP.PUBLIC.DATA_ENGINEER_AGENT',
+        '<DATABASE>.PUBLIC.<AGENT_NAME>',
         '{thread_id}',
         PARSE_JSON('{json.dumps({"messages": [{"role": "user", "content": message}]})}')
     )
@@ -90,7 +90,7 @@ with col2:
                     STATUS,
                     CREATED_AT,
                     TABLE_NAME
-                FROM LEILA_APP.PUBLIC.DATA_PIPELINE_TRACKER
+                FROM <DATABASE>.PUBLIC.DATA_PIPELINE_TRACKER
                 ORDER BY CREATED_AT DESC
                 LIMIT 10
             """).collect()
@@ -142,4 +142,4 @@ if st.sidebar.button("🔄 Clear Chat"):
     st.rerun()
 
 st.sidebar.markdown("---")
-st.sidebar.caption(f"Agent: LEILA_APP.PUBLIC.DATA_ENGINEER_AGENT")
+st.sidebar.caption(f"Agent: <DATABASE>.PUBLIC.<AGENT_NAME>")

@@ -16,9 +16,9 @@ except:
     from snowflake.snowpark import Session
     session = Session.builder.configs({"connection": conn}).create()
 
-session.sql("USE DATABASE LEILA_APP").collect()
+session.sql("USE DATABASE <DATABASE>").collect()
 session.sql("USE SCHEMA PUBLIC").collect()
-session.sql("USE WAREHOUSE LEILAAPP").collect()
+session.sql("USE WAREHOUSE <WAREHOUSE>").collect()
 
 try:
     pipelines = session.sql("""
@@ -30,7 +30,7 @@ try:
             FILE_FORMAT_NAME,
             STATUS,
             CREATED_AT
-        FROM LEILA_APP.PUBLIC.DATA_PIPELINE_TRACKER
+        FROM <DATABASE>.PUBLIC.DATA_PIPELINE_TRACKER
         ORDER BY CREATED_AT DESC
     """).collect()
     
@@ -64,7 +64,7 @@ try:
                     with st.spinner("Querying external table..."):
                         try:
                             result = session.sql(f"""
-                                SELECT * FROM LEILA_APP.PUBLIC.{pipeline['TABLE_NAME']}
+                                SELECT * FROM <DATABASE>.PUBLIC.{pipeline['TABLE_NAME']}
                                 LIMIT {limit}
                             """).collect()
                             
@@ -85,7 +85,7 @@ try:
                     with st.spinner("Listing files in stage..."):
                         try:
                             files = session.sql(f"""
-                                LIST @LEILA_APP.PUBLIC.{pipeline['STAGE_NAME']}
+                                LIST @<DATABASE>.PUBLIC.{pipeline['STAGE_NAME']}
                             """).collect()
                             
                             if files:
@@ -107,8 +107,8 @@ try:
                                 SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
                                        $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
                                        $21, $22, $23
-                                FROM @LEILA_APP.PUBLIC.{pipeline['STAGE_NAME']}
-                                (FILE_FORMAT => LEILA_APP.PUBLIC.{pipeline['FILE_FORMAT_NAME']})
+                                FROM @<DATABASE>.PUBLIC.{pipeline['STAGE_NAME']}
+                                (FILE_FORMAT => <DATABASE>.PUBLIC.{pipeline['FILE_FORMAT_NAME']})
                                 LIMIT {limit_stage}
                             """).collect()
                             

@@ -12,6 +12,12 @@ triggers:
 
 # Autonomous Data Engineer Agent
 
+> **📝 Note on Placeholders**: Throughout this document, angle brackets like `<DATABASE>`, `<WAREHOUSE>`, `<AGENT_NAME>`, and `<connection>` are placeholders. Replace them with your actual Snowflake object names when implementing. For example:
+> - `<DATABASE>` → your database name (e.g., `MY_DATABASE`)
+> - `<WAREHOUSE>` → your warehouse name (e.g., `COMPUTE_WH`)
+> - `<AGENT_NAME>` → your agent name (e.g., `DATA_ENGINEER_AGENT`)
+> - `<connection>` → your Snow CLI connection name (e.g., `myconn`)
+
 ## Overview
 
 This skill creates a Cortex Agent that autonomously generates and executes DDL for data pipeline setup. Users describe their data sources in natural language, and the agent:
@@ -82,7 +88,7 @@ Use `ask_user_question` tool to collect:
       "header": "Agent Name",
       "question": "What should the agent be called?",
       "type": "text",
-      "defaultValue": "DATA_ENGINEER_AGENT",
+      "defaultValue": "<AGENT_NAME>",
       "multiSelect": false
     },
     {
@@ -1311,14 +1317,14 @@ try:
 except:
     import os
     from snowflake.connector import connect
-    conn = connect(connection_name=os.getenv("SNOWFLAKE_CONNECTION_NAME") or "pm")
+    conn = connect(connection_name=os.getenv("SNOWFLAKE_CONNECTION_NAME") or "<connection>")
     from snowflake.snowpark import Session
     session = Session.builder.configs({"connection": conn}).create()
 
 # Set context
-session.sql("USE DATABASE LEILA_APP").collect()
+session.sql("USE DATABASE <DATABASE>").collect()
 session.sql("USE SCHEMA PUBLIC").collect()
-session.sql("USE WAREHOUSE LEILAAPP").collect()
+session.sql("USE WAREHOUSE <WAREHOUSE>").collect()
 
 st.title("📊 Data Preview")
 
@@ -1352,7 +1358,7 @@ with tab1:
         with st.spinner("Querying external table..."):
             try:
                 result = session.sql(f"""
-                    SELECT * FROM LEILA_APP.PUBLIC.{pipeline['TABLE_NAME']}
+                    SELECT * FROM <DATABASE>.PUBLIC.{pipeline['TABLE_NAME']}
                     LIMIT {limit_ext}
                 """).collect()
                 
@@ -1379,8 +1385,8 @@ with tab2:
                 schema_result = session.sql(f"""
                     SELECT * FROM TABLE(
                       INFER_SCHEMA(
-                        LOCATION => '@LEILA_APP.PUBLIC.{pipeline['STAGE_NAME']}',
-                        FILE_FORMAT => 'LEILA_APP.PUBLIC.{pipeline['FILE_FORMAT_NAME']}'
+                        LOCATION => '@<DATABASE>.PUBLIC.{pipeline['STAGE_NAME']}',
+                        FILE_FORMAT => '<DATABASE>.PUBLIC.{pipeline['FILE_FORMAT_NAME']}'
                       )
                     )
                 """).collect()
@@ -1393,8 +1399,8 @@ with tab2:
                 
                 result = session.sql(f"""
                     SELECT {columns}
-                    FROM @LEILA_APP.PUBLIC.{pipeline['STAGE_NAME']}
-                    (FILE_FORMAT => LEILA_APP.PUBLIC.{pipeline['FILE_FORMAT_NAME']})
+                    FROM @<DATABASE>.PUBLIC.{pipeline['STAGE_NAME']}
+                    (FILE_FORMAT => <DATABASE>.PUBLIC.{pipeline['FILE_FORMAT_NAME']})
                     LIMIT {limit_stage}
                 """).collect()
                 
@@ -1424,7 +1430,7 @@ with tab3:
                 
                 # Try to query it
                 result = session.sql(f"""
-                    SELECT * FROM LEILA_APP.PUBLIC.{staging_table_name}
+                    SELECT * FROM <DATABASE>.PUBLIC.{staging_table_name}
                     LIMIT {limit_staging}
                 """).collect()
                 
@@ -1441,8 +1447,8 @@ with tab3:
                     schema_result = session.sql(f"""
                         SELECT * FROM TABLE(
                           INFER_SCHEMA(
-                            LOCATION => '@LEILA_APP.PUBLIC.{pipeline['STAGE_NAME']}',
-                            FILE_FORMAT => 'LEILA_APP.PUBLIC.{pipeline['FILE_FORMAT_NAME']}'
+                            LOCATION => '@<DATABASE>.PUBLIC.{pipeline['STAGE_NAME']}',
+                            FILE_FORMAT => '<DATABASE>.PUBLIC.{pipeline['FILE_FORMAT_NAME']}'
                           )
                         )
                     """).collect()
@@ -1452,10 +1458,10 @@ with tab3:
                     
                     # Create staging table
                     session.sql(f"""
-                        CREATE OR REPLACE TABLE LEILA_APP.PUBLIC.{staging_table_name} AS
+                        CREATE OR REPLACE TABLE <DATABASE>.PUBLIC.{staging_table_name} AS
                         SELECT {columns}
-                        FROM @LEILA_APP.PUBLIC.{pipeline['STAGE_NAME']}
-                        (FILE_FORMAT => LEILA_APP.PUBLIC.{pipeline['FILE_FORMAT_NAME']})
+                        FROM @<DATABASE>.PUBLIC.{pipeline['STAGE_NAME']}
+                        (FILE_FORMAT => <DATABASE>.PUBLIC.{pipeline['FILE_FORMAT_NAME']})
                     """).collect()
                     
                     st.success("Staging table created! Click again to query.")

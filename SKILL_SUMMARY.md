@@ -79,7 +79,7 @@ The skill will automatically:
 ## 📚 Skill Location
 
 The skill has been saved to:
-- **Project**: `/Users/leyu/DATA_ENGINEER_AGENT/SKILL.md`
+- **Project**: `<project_directory>/SKILL.md`
 - **Memory**: `/memories/autonomous_data_engineer_agent_skill.md`
 
 ## 🔑 Key Innovations Captured

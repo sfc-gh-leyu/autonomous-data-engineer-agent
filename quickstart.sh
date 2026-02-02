@@ -6,7 +6,7 @@ echo "╚═══════════════════════�
 echo ""
 
 echo "📦 What you have:"
-echo "  ✓ Cortex Agent (LEILA_APP.PUBLIC.DATA_ENGINEER_AGENT)"
+echo "  ✓ Cortex Agent (<DATABASE>.PUBLIC.<AGENT_NAME>)"
 echo "  ✓ 5 Custom Tools (Stored Procedures)"
 echo "  ✓ Pipeline Tracker Table"
 echo "  ✓ Streamlit Dashboard Application"
@@ -62,13 +62,13 @@ do
             echo "Testing agent with SQL..."
             echo ""
             echo "Step 1: Creating conversation thread..."
-            THREAD_ID=$(snow sql -q "SELECT SYSTEM\$CREATE_CORTEX_THREAD('quickstart_test');" -c pm --format json | python3 -c "import sys, json; print(json.load(sys.stdin)[0]['SYSTEM\$CREATE_CORTEX_THREAD(\'QUICKSTART_TEST\')'])")
+            THREAD_ID=$(snow sql -q "SELECT SYSTEM\$CREATE_CORTEX_THREAD('quickstart_test');" -c <connection> --format json | python3 -c "import sys, json; print(json.load(sys.stdin)[0]['SYSTEM\$CREATE_CORTEX_THREAD(\'QUICKSTART_TEST\')'])")
             echo "Thread ID: $THREAD_ID"
             echo ""
             echo "Step 2: Sending test message..."
             echo "Message: 'What can you help me with?'"
             echo ""
-            snow sql -q "SELECT SYSTEM\$RUN_CORTEX_AGENT('LEILA_APP.PUBLIC.DATA_ENGINEER_AGENT', '$THREAD_ID', PARSE_JSON('{\"messages\": [{\"role\": \"user\", \"content\": \"What can you help me with?\"}]}'));" -c pm
+            snow sql -q "SELECT SYSTEM\$RUN_CORTEX_AGENT('<DATABASE>.PUBLIC.<AGENT_NAME>', '$THREAD_ID', PARSE_JSON('{\"messages\": [{\"role\": \"user\", \"content\": \"What can you help me with?\"}]}'));" -c <connection>
             echo ""
             echo "Test complete!"
             break
@@ -76,7 +76,7 @@ do
         "📊 View Pipeline History")
             echo ""
             echo "Recent pipelines:"
-            snow sql -q "SELECT PIPELINE_ID, DATA_SOURCE_TYPE, STATUS, CREATED_AT FROM LEILA_APP.PUBLIC.DATA_PIPELINE_TRACKER ORDER BY CREATED_AT DESC LIMIT 10;" -c pm
+            snow sql -q "SELECT PIPELINE_ID, DATA_SOURCE_TYPE, STATUS, CREATED_AT FROM <DATABASE>.PUBLIC.DATA_PIPELINE_TRACKER ORDER BY CREATED_AT DESC LIMIT 10;" -c <connection>
             break
             ;;
         "ℹ️  Show Documentation")

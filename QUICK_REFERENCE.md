@@ -1,5 +1,7 @@
 # Quick Reference: Snowflake Data Access Patterns
 
+> **📝 Placeholders**: Replace `<DATABASE>`, `<WAREHOUSE>`, `<connection>`, etc. with your actual Snowflake object names.
+
 ## 🚨 Critical: Stage Query Syntax
 
 ### ❌ WRONG - This ALWAYS Fails
@@ -285,9 +287,9 @@ except Exception as e:
 
 ## 📚 Reference Files
 
-- **Complete Guide**: `/Users/leyu/DATA_ENGINEER_AGENT/SKILL.md`
-- **Update Summary**: `/Users/leyu/DATA_ENGINEER_AGENT/SKILL_UPDATE_SUMMARY.md`
-- **Working Example**: `/Users/leyu/DATA_ENGINEER_AGENT/pages/Data_Preview.py`
+- **Complete Guide**: `/Users/leyu/<AGENT_NAME>/SKILL.md`
+- **Update Summary**: `/Users/leyu/<AGENT_NAME>/SKILL_UPDATE_SUMMARY.md`
+- **Working Example**: `/Users/leyu/<AGENT_NAME>/pages/Data_Preview.py`
 
 ---
 

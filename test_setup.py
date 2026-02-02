@@ -8,7 +8,7 @@ print()
 
 print("Step 1: Verify agent exists")
 result = subprocess.run(
-    ['snow', 'sql', '-q', 'SHOW AGENTS LIKE \'DATA_ENGINEER_AGENT\' IN SCHEMA LEILA_APP.PUBLIC;', '-c', 'pm'],
+    ['snow', 'sql', '-q', 'SHOW AGENTS LIKE \'<AGENT_NAME>\' IN SCHEMA <DATABASE>.PUBLIC;', '-c', 'pm'],
     capture_output=True,
     text=True
 )
@@ -16,11 +16,11 @@ print(result.stdout)
 
 print("\nStep 2: Describe agent configuration")
 result = subprocess.run(
-    ['snow', 'sql', '-q', 'DESCRIBE AGENT LEILA_APP.PUBLIC.DATA_ENGINEER_AGENT;', '-c', 'pm'],
+    ['snow', 'sql', '-q', 'DESCRIBE AGENT <DATABASE>.PUBLIC.<AGENT_NAME>;', '-c', 'pm'],
     capture_output=True,
     text=True
 )
-if 'DATA_ENGINEER_AGENT' in result.stdout:
+if '<AGENT_NAME>' in result.stdout:
     print("✅ Agent exists and is configured")
 else:
     print("❌ Agent not found")
@@ -37,7 +37,7 @@ procs = [
 
 for proc in procs:
     result = subprocess.run(
-        ['snow', 'sql', '-q', f"SHOW PROCEDURES LIKE '{proc}' IN SCHEMA LEILA_APP.PUBLIC;", '-c', 'pm'],
+        ['snow', 'sql', '-q', f"SHOW PROCEDURES LIKE '{proc}' IN SCHEMA <DATABASE>.PUBLIC;", '-c', 'pm'],
         capture_output=True,
         text=True
     )
@@ -48,7 +48,7 @@ for proc in procs:
 
 print("\nStep 4: Check tracker table")
 result = subprocess.run(
-    ['snow', 'sql', '-q', 'SELECT COUNT(*) FROM LEILA_APP.PUBLIC.DATA_PIPELINE_TRACKER;', '-c', 'pm'],
+    ['snow', 'sql', '-q', 'SELECT COUNT(*) FROM <DATABASE>.PUBLIC.DATA_PIPELINE_TRACKER;', '-c', 'pm'],
     capture_output=True,
     text=True
 )

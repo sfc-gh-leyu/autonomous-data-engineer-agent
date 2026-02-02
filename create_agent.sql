@@ -1,8 +1,8 @@
 USE ROLE ACCOUNTADMIN;
-USE DATABASE LEILA_APP;
+USE DATABASE <DATABASE>;
 USE SCHEMA PUBLIC;
 
-CREATE OR REPLACE AGENT LEILA_APP.PUBLIC.DATA_ENGINEER_AGENT
+CREATE OR REPLACE AGENT <DATABASE>.PUBLIC.<AGENT_NAME>
   COMMENT = 'Autonomous data engineer agent for creating pipelines'
   PROFILE = '{"display_name": "Data Engineer Agent"}'
   FROM SPECIFICATION $$
@@ -249,46 +249,46 @@ CREATE OR REPLACE AGENT LEILA_APP.PUBLIC.DATA_ENGINEER_AGENT
   "tool_resources": {
     "generate_storage_integration": {
       "type": "procedure",
-      "identifier": "LEILA_APP.PUBLIC.GENERATE_STORAGE_INTEGRATION_DDL",
+      "identifier": "<DATABASE>.PUBLIC.GENERATE_STORAGE_INTEGRATION_DDL",
       "execution_environment": {
         "type": "warehouse",
-        "warehouse": "LEILAAPP",
+        "warehouse": "<WAREHOUSE>",
         "query_timeout": 300
       }
     },
     "generate_file_format": {
       "type": "procedure",
-      "identifier": "LEILA_APP.PUBLIC.GENERATE_FILE_FORMAT_DDL",
+      "identifier": "<DATABASE>.PUBLIC.GENERATE_FILE_FORMAT_DDL",
       "execution_environment": {
         "type": "warehouse",
-        "warehouse": "LEILAAPP",
+        "warehouse": "<WAREHOUSE>",
         "query_timeout": 300
       }
     },
     "generate_external_stage": {
       "type": "procedure",
-      "identifier": "LEILA_APP.PUBLIC.GENERATE_EXTERNAL_STAGE_DDL",
+      "identifier": "<DATABASE>.PUBLIC.GENERATE_EXTERNAL_STAGE_DDL",
       "execution_environment": {
         "type": "warehouse",
-        "warehouse": "LEILAAPP",
+        "warehouse": "<WAREHOUSE>",
         "query_timeout": 300
       }
     },
     "generate_external_table": {
       "type": "procedure",
-      "identifier": "LEILA_APP.PUBLIC.GENERATE_EXTERNAL_TABLE_DDL",
+      "identifier": "<DATABASE>.PUBLIC.GENERATE_EXTERNAL_TABLE_DDL",
       "execution_environment": {
         "type": "warehouse",
-        "warehouse": "LEILAAPP",
+        "warehouse": "<WAREHOUSE>",
         "query_timeout": 300
       }
     },
     "execute_pipeline_ddl": {
       "type": "procedure",
-      "identifier": "LEILA_APP.PUBLIC.EXECUTE_DDL_AND_TRACK",
+      "identifier": "<DATABASE>.PUBLIC.EXECUTE_DDL_AND_TRACK",
       "execution_environment": {
         "type": "warehouse",
-        "warehouse": "LEILAAPP",
+        "warehouse": "<WAREHOUSE>",
         "query_timeout": 300
       }
     }

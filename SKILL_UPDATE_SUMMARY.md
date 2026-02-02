@@ -6,7 +6,7 @@ Updated the `SKILL.md` file for the autonomous data engineer agent based on real
 
 ## Changes Summary
 
-- **File**: `/Users/leyu/DATA_ENGINEER_AGENT/SKILL.md`
+- **File**: `/Users/leyu/<AGENT_NAME>/SKILL.md`
 - **Before**: 1,033 lines
 - **After**: 1,569 lines
 - **Added**: 536 lines of new content
@@ -262,7 +262,7 @@ Future users can build autonomous data engineer agents with confidence, avoiding
 
 ## References
 
-- Original Skill File: `/Users/leyu/DATA_ENGINEER_AGENT/SKILL.md`
+- Original Skill File: `/Users/leyu/<AGENT_NAME>/SKILL.md`
 - Memory File: `/memories/autonomous_data_engineer_agent_skill.md`
 - Working Application: `http://localhost:8501/Data_Preview`
 - Session Date: January 31 - February 1, 2026

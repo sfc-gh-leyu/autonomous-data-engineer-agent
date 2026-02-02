@@ -4,6 +4,8 @@ An intelligent Snowflake agent that automatically generates DDL and sets up data
 
 > **✨ Updated February 2026**: Now includes production-tested patterns, comprehensive troubleshooting guides, and real-world debugging solutions. See [SKILL_UPDATE_SUMMARY.md](SKILL_UPDATE_SUMMARY.md) for latest improvements.
 
+> **📝 Note on Placeholders**: This documentation uses placeholders like `<DATABASE>`, `<WAREHOUSE>`, `<AGENT_NAME>`, and `<connection>` throughout. Replace these with your actual Snowflake object names and connection details when deploying.
+
 ## 🎯 Features
 
 - **Storage Integration Generation**: Automatically creates storage integrations for AWS S3, Azure Blob Storage, and Google Cloud Storage
@@ -17,10 +19,10 @@ An intelligent Snowflake agent that automatically generates DDL and sets up data
 
 ### Components
 
-1. **Cortex Agent** (`DATA_ENGINEER_AGENT`)
+1. **Cortex Agent** (`<AGENT_NAME>`)
    - Orchestrates the pipeline creation workflow
    - Uses 5 custom stored procedures as tools
-   - Deployed in: `LEILA_APP.PUBLIC.DATA_ENGINEER_AGENT`
+   - Deployed in: `<DATABASE>.PUBLIC.<AGENT_NAME>`
 
 2. **Custom Tools (Stored Procedures)**
    - `GENERATE_STORAGE_INTEGRATION_DDL`: Creates storage integration DDL
@@ -50,9 +52,9 @@ An intelligent Snowflake agent that automatically generates DDL and sets up data
 
 - Snowflake account with SPCS enabled
 - Docker installed locally
-- Snow CLI configured with connection named 'pm'
+- Snow CLI configured with connection named '<connection>'
 - ACCOUNTADMIN role access
-- Warehouse: LEILAAPP
+- Warehouse: <WAREHOUSE>
 
 ### Step 1: Review the Agent (Already Created)
 
@@ -60,7 +62,7 @@ The agent has been created in Snowflake:
 
 ```sql
 USE ROLE ACCOUNTADMIN;
-DESCRIBE AGENT LEILA_APP.PUBLIC.DATA_ENGINEER_AGENT;
+DESCRIBE AGENT <DATABASE>.PUBLIC.<AGENT_NAME>;
 ```
 
 ### Step 2: Deploy to SPCS
@@ -68,7 +70,7 @@ DESCRIBE AGENT LEILA_APP.PUBLIC.DATA_ENGINEER_AGENT;
 Run the deployment script:
 
 ```bash
-cd /Users/leyu/DATA_ENGINEER_AGENT
+cd /Users/leyu/<AGENT_NAME>
 ./deploy.sh
 ```
 
@@ -84,7 +86,7 @@ This script will:
 After deployment, get the endpoint URL:
 
 ```bash
-snow sql -q "SHOW ENDPOINTS IN SERVICE DATA_ENGINEER_SERVICE;" -c pm
+snow sql -q "SHOW ENDPOINTS IN SERVICE DATA_ENGINEER_SERVICE;" -c <connection>
 ```
 
 ## 📖 Usage Examples
@@ -162,7 +164,7 @@ View all created pipelines:
 
 ```sql
 SELECT * 
-FROM LEILA_APP.PUBLIC.DATA_PIPELINE_TRACKER
+FROM <DATABASE>.PUBLIC.DATA_PIPELINE_TRACKER
 ORDER BY CREATED_AT DESC;
 ```
 
@@ -204,7 +206,7 @@ SELECT SYSTEM$CREATE_CORTEX_THREAD('test_session');
 
 -- Send a message (replace <thread_id> with actual thread ID from above)
 SELECT SYSTEM$RUN_CORTEX_AGENT(
-    'LEILA_APP.PUBLIC.DATA_ENGINEER_AGENT',
+    '<DATABASE>.PUBLIC.<AGENT_NAME>',
     '<thread_id>',
     PARSE_JSON('{"messages": [{"role": "user", "content": "Help me set up an S3 pipeline"}]}')
 );
@@ -229,10 +231,10 @@ ALTER SERVICE DATA_ENGINEER_SERVICE RESUME;
 To grant other roles access to the agent:
 
 ```sql
-GRANT USAGE ON AGENT LEILA_APP.PUBLIC.DATA_ENGINEER_AGENT TO ROLE DATA_ENGINEER;
-GRANT USAGE ON DATABASE LEILA_APP TO ROLE DATA_ENGINEER;
-GRANT USAGE ON SCHEMA LEILA_APP.PUBLIC TO ROLE DATA_ENGINEER;
-GRANT USAGE ON WAREHOUSE LEILAAPP TO ROLE DATA_ENGINEER;
+GRANT USAGE ON AGENT <DATABASE>.PUBLIC.<AGENT_NAME> TO ROLE DATA_ENGINEER;
+GRANT USAGE ON DATABASE <DATABASE> TO ROLE DATA_ENGINEER;
+GRANT USAGE ON SCHEMA <DATABASE>.PUBLIC TO ROLE DATA_ENGINEER;
+GRANT USAGE ON WAREHOUSE <WAREHOUSE> TO ROLE DATA_ENGINEER;
 ```
 
 ## 📚 Documentation
@@ -268,7 +270,7 @@ After deployment, you can:
 ## 📦 Project Structure
 
 ```
-DATA_ENGINEER_AGENT/
+<AGENT_NAME>/
 ├── agent_spec.json              # Agent configuration
 ├── streamlit_app.py             # Streamlit dashboard
 ├── Dockerfile                   # Container image definition
@@ -291,7 +293,7 @@ DATA_ENGINEER_AGENT/
 
 ---
 
-**Agent**: `LEILA_APP.PUBLIC.DATA_ENGINEER_AGENT`  
+**Agent**: `<DATABASE>.PUBLIC.<AGENT_NAME>`  
 **Service**: `DATA_ENGINEER_SERVICE`  
 **Pool**: `DATA_ENGINEER_POOL`  
 **Status**: ✅ Ready to deploy

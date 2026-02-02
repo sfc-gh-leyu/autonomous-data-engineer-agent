@@ -25,19 +25,19 @@ An intelligent Snowflake Cortex Agent that automates data pipeline creation. Jus
 
 ### Option 1: Interactive Menu (Recommended)
 ```bash
-cd /Users/leyu/DATA_ENGINEER_AGENT
+cd <project_directory>
 ./quickstart.sh
 ```
 
 ### Option 2: Deploy to SPCS Immediately
 ```bash
-cd /Users/leyu/DATA_ENGINEER_AGENT
+cd <project_directory>
 ./deploy.sh
 ```
 
 ### Option 3: Run Locally for Testing
 ```bash
-cd /Users/leyu/DATA_ENGINEER_AGENT
+cd <project_directory>
 SNOWFLAKE_CONNECTION_NAME=pm streamlit run streamlit_app.py
 ```
 

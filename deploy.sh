@@ -7,15 +7,15 @@ echo "🔧 Building and Deploying Data Engineer Agent to SPCS..."
 echo "Step 1: Create image repository"
 snow sql -q "
 USE ROLE ACCOUNTADMIN;
-USE DATABASE LEILA_APP;
+USE DATABASE <DATABASE>;
 USE SCHEMA PUBLIC;
 
 CREATE IMAGE REPOSITORY IF NOT EXISTS DATA_ENGINEER_REPO;
 SHOW IMAGE REPOSITORIES;
-" -c pm
+" -c <connection>
 
 echo "Step 2: Get repository URL"
-REPO_URL=$(snow sql -q "SHOW IMAGE REPOSITORIES IN SCHEMA LEILA_APP.PUBLIC;" -c pm --format json | python3 -c "
+REPO_URL=$(snow sql -q "SHOW IMAGE REPOSITORIES IN SCHEMA <DATABASE>.PUBLIC;" -c <connection> --format json | python3 -c "
 import sys, json
 repos = json.load(sys.stdin)
 for repo in repos:
@@ -33,7 +33,7 @@ echo "Step 4: Tag image"
 docker tag data_engineer_agent:latest $REPO_URL/data_engineer_agent:latest
 
 echo "Step 5: Login to Snowflake registry"
-snow spcs image-registry login -c pm
+snow spcs image-registry login -c <connection>
 
 echo "Step 6: Push image"
 docker push $REPO_URL/data_engineer_agent:latest
@@ -46,7 +46,7 @@ CREATE COMPUTE POOL IF NOT EXISTS DATA_ENGINEER_POOL
   INSTANCE_FAMILY = CPU_X64_XS
   AUTO_RESUME = TRUE
   AUTO_SUSPEND_SECS = 3600;
-" -c pm
+" -c <connection>
 
 echo "Step 8: Wait for compute pool to be ready"
 echo "Checking compute pool status..."
@@ -68,22 +68,22 @@ spec:
     port: 8501
     public: true
 \$\$;
-" -c pm
+" -c <connection>
 
 echo "Step 10: Check service status"
 snow sql -q "
 SHOW SERVICES LIKE 'DATA_ENGINEER_SERVICE';
 DESCRIBE SERVICE DATA_ENGINEER_SERVICE;
-" -c pm
+" -c <connection>
 
 echo ""
 echo "✅ Deployment complete!"
 echo ""
 echo "To get the service endpoint URL, run:"
-echo "  snow sql -q \"SHOW ENDPOINTS IN SERVICE DATA_ENGINEER_SERVICE;\" -c pm"
+echo "  snow sql -q \"SHOW ENDPOINTS IN SERVICE DATA_ENGINEER_SERVICE;\" -c <connection>"
 echo ""
 echo "To check service status:"
-echo "  snow sql -q \"CALL SYSTEM\$GET_SERVICE_STATUS('DATA_ENGINEER_SERVICE');\" -c pm"
+echo "  snow sql -q \"CALL SYSTEM\$GET_SERVICE_STATUS('DATA_ENGINEER_SERVICE');\" -c <connection>"
 echo ""
 echo "To check logs:"
-echo "  snow sql -q \"CALL SYSTEM\$GET_SERVICE_LOGS('DATA_ENGINEER_SERVICE', '0', 'data-engineer-agent');\" -c pm"
+echo "  snow sql -q \"CALL SYSTEM\$GET_SERVICE_LOGS('DATA_ENGINEER_SERVICE', '0', 'data-engineer-agent');\" -c <connection>"

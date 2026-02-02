@@ -52,7 +52,7 @@ All created in `LEILA_APP.PUBLIC`:
 
 1. Navigate to project directory:
    ```bash
-   cd /Users/leyu/DATA_ENGINEER_AGENT
+   cd <project_directory>
    ```
 
 2. Run deployment script:
@@ -62,7 +62,7 @@ All created in `LEILA_APP.PUBLIC`:
 
 3. Get endpoint URL:
    ```bash
-   snow sql -q "SHOW ENDPOINTS IN SERVICE DATA_ENGINEER_SERVICE;" -c pm
+   snow sql -q "SHOW ENDPOINTS IN SERVICE DATA_ENGINEER_SERVICE;" -c <connection>
    ```
 
 4. Access the dashboard at the provided URL
@@ -153,7 +153,7 @@ GRANT SELECT ON TABLE LEILA_APP.PUBLIC.DATA_PIPELINE_TRACKER TO ROLE <role_name>
 ## 📁 Project Files
 
 ```
-/Users/leyu/DATA_ENGINEER_AGENT/
+<project_directory>/
 ├── agent_spec.json              ← Agent configuration
 ├── streamlit_app.py             ← Dashboard application
 ├── Dockerfile                   ← Container image
@@ -197,16 +197,16 @@ GRANT SELECT ON TABLE LEILA_APP.PUBLIC.DATA_PIPELINE_TRACKER TO ROLE <role_name>
 
 ```bash
 # List all agents
-snow sql -q "SHOW AGENTS IN SCHEMA LEILA_APP.PUBLIC;" -c pm
+snow sql -q "SHOW AGENTS IN SCHEMA LEILA_APP.PUBLIC;" -c <connection>
 
 # Describe agent
-snow sql -q "DESCRIBE AGENT LEILA_APP.PUBLIC.DATA_ENGINEER_AGENT;" -c pm
+snow sql -q "DESCRIBE AGENT LEILA_APP.PUBLIC.DATA_ENGINEER_AGENT;" -c <connection>
 
 # Check service
-snow sql -q "SHOW SERVICES;" -c pm
+snow sql -q "SHOW SERVICES;" -c <connection>
 
 # Restart service
-snow sql -q "ALTER SERVICE DATA_ENGINEER_SERVICE SUSPEND; ALTER SERVICE DATA_ENGINEER_SERVICE RESUME;" -c pm
+snow sql -q "ALTER SERVICE DATA_ENGINEER_SERVICE SUSPEND; ALTER SERVICE DATA_ENGINEER_SERVICE RESUME;" -c <connection>
 ```
 
 ---
