@@ -662,7 +662,36 @@ SHOW PROCEDURES IN SCHEMA <DATABASE>.<SCHEMA>;
 SELECT COUNT(*) FROM <DATABASE>.<SCHEMA>.DATA_PIPELINE_TRACKER;
 ```
 
-### Step 7: Create Streamlit Dashboard
+### Step 7: Create Dashboard UI
+
+Use `ask_user_question` tool to let user choose their preferred UI framework:
+
+```json
+{
+  "questions": [
+    {
+      "header": "UI Framework",
+      "question": "Which UI framework would you like for the agent dashboard?",
+      "type": "options",
+      "multiSelect": false,
+      "options": [
+        {
+          "label": "Streamlit",
+          "description": "Python-based, fast to build, native Snowflake integration, runs in Snowpark Container Services"
+        },
+        {
+          "label": "React",
+          "description": "Modern JavaScript framework, highly customizable, production-grade, requires more setup"
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Based on user selection:**
+
+#### Option A: Streamlit UI
 
 Create `streamlit_app.py`:
 
@@ -818,6 +847,55 @@ st.sidebar.caption(f"Agent: <DATABASE>.<SCHEMA>.<AGENT_NAME>")
 ```
 
 **IMPORTANT**: Replace all placeholders with actual values.
+
+#### Option B: React UI
+
+If user selects React, invoke the `build-react-app` skill:
+
+```
+Use skill: build-react-app
+```
+
+The React app should include:
+- Chat interface component for agent interaction
+- Pipeline tracker dashboard
+- Quick setup form
+- Snowflake REST API integration for agent calls
+
+Key React components to create:
+1. `src/components/ChatInterface.tsx` - Agent chat UI
+2. `src/components/PipelineTracker.tsx` - Display pipeline history
+3. `src/components/QuickSetup.tsx` - Form for quick pipeline setup
+4. `src/services/snowflakeApi.ts` - Cortex Agent API calls
+
+Example API call for React:
+```typescript
+// src/services/snowflakeApi.ts
+const AGENT_ENDPOINT = '/api/v2/databases/<DATABASE>/schemas/<SCHEMA>/agents/<AGENT_NAME>:run';
+
+export async function callAgent(message: string, threadId: string) {
+  const response = await fetch(AGENT_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${getToken()}`
+    },
+    body: JSON.stringify({
+      thread_id: threadId,
+      messages: [{ role: 'user', content: [{ type: 'text', text: message }] }]
+    })
+  });
+  return response.json();
+}
+```
+
+#### Option C: Other UI Framework
+
+If user selects "Something else", ask what framework they prefer and provide guidance:
+- Vue.js, Angular, Svelte - Similar to React approach
+- Native mobile (iOS/Swift, Android/Kotlin) - Use REST API
+- CLI tool - Python script with rich/click
+- Jupyter Notebook - Interactive notebook interface
 
 ### Step 8: Create SPCS Deployment Files
 
